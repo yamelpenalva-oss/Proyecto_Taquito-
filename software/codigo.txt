@@ -1,0 +1,139 @@
+Aquí tienes el código completamente limpio, sin comentarios ni anotaciones, listo para competir:
+
+```cpp
+#include <Ps3Controller.h>
+
+#define PWMA 17
+#define AIN1 21
+#define AIN2 22
+
+#define PWMB 10   
+#define BIN1 23
+#define BIN2 11   
+
+#define STBY 16
+#define LED_ESTADO 3
+
+#define PWM_FREQ 2000      
+#define PWM_RESOLUTION 8  
+
+int velAlta = 230;   
+int velBaja = 100;   
+
+void motorIzquierdo(int vel) {
+    if (vel > 0) {
+        digitalWrite(AIN1, HIGH);
+        digitalWrite(AIN2, LOW);
+    } else if (vel < 0) {
+        digitalWrite(AIN1, LOW);
+        digitalWrite(AIN2, HIGH);
+        vel = -vel;
+    } else {
+        digitalWrite(AIN1, LOW);
+        digitalWrite(AIN2, LOW);
+    }
+    ledcWrite(PWMA, vel); 
+}
+
+void motorDerecho(int vel) {
+    if (vel > 0) {
+        digitalWrite(BIN1, HIGH);
+        digitalWrite(BIN2, LOW);
+    } else if (vel < 0) {
+        digitalWrite(BIN1, LOW);
+        digitalWrite(BIN2, HIGH);
+        vel = -vel;
+    } else {
+        digitalWrite(BIN1, LOW);
+        digitalWrite(BIN2, LOW);
+    }
+    ledcWrite(PWMB, vel);
+}
+
+void parar() {
+    motorIzquierdo(0);
+    motorDerecho(0);
+}
+
+void adelante() {
+    motorIzquierdo(velAlta);
+    motorDerecho(velAlta);
+}
+
+void atras() {
+    motorIzquierdo(-velAlta);
+    motorDerecho(-velAlta);
+}
+
+void giroCruzadoDerecha() {
+    motorIzquierdo(velAlta);
+    motorDerecho(-velBaja); 
+}
+
+void giroCruzadoIzquierda() {
+    motorIzquierdo(-velBaja); 
+    motorDerecho(velAlta);
+}
+
+void diagonalAtaqueDerecha() {
+    motorIzquierdo(velAlta);
+    motorDerecho(velBaja);
+}
+
+void diagonalAtaqueIzquierda() {
+    motorIzquierdo(velBaja);
+    motorDerecho(velAlta);
+}
+
+void notify() {
+    if (Ps3.event.button_down.cross)             adelante();
+    else if (Ps3.event.button_down.triangle)      atras();
+    else if (Ps3.event.button_down.square)        giroCruzadoIzquierda();
+    else if (Ps3.event.button_down.circle)        giroCruzadoDerecha();
+    else if (Ps3.event.button_down.r1)            diagonalAtaqueDerecha();
+    else if (Ps3.event.button_down.l1)            diagonalAtaqueIzquierda();
+    
+    else if (Ps3.event.button_up.cross  || Ps3.event.button_up.triangle || 
+             Ps3.event.button_up.square || Ps3.event.button_up.circle   ||
+             Ps3.event.button_up.r1     || Ps3.event.button_up.l1) 
+    {
+        parar();
+    }
+}
+
+void onConnect() {
+    digitalWrite(LED_ESTADO, HIGH); 
+}
+
+void onDisconnect() {
+    parar();
+    digitalWrite(LED_ESTADO, LOW);
+}
+
+void setup() {
+    Serial.begin(115200);
+
+    pinMode(AIN1, OUTPUT);
+    pinMode(AIN2, OUTPUT);
+    pinMode(BIN1, OUTPUT);
+    pinMode(BIN2, OUTPUT);
+    pinMode(STBY, OUTPUT);
+    pinMode(LED_ESTADO, OUTPUT);
+
+    digitalWrite(LED_ESTADO, LOW);
+    digitalWrite(STBY, HIGH);
+
+    ledcAttach(PWMA, PWM_FREQ, PWM_RESOLUTION);
+    ledcAttach(PWMB, PWM_FREQ, PWM_RESOLUTION);
+
+    Ps3.attach(notify);
+    Ps3.attachOnConnect(onConnect);
+    
+    Ps3.begin("01:02:03:04:05:06"); 
+}
+
+void loop() {
+    delay(10);
+}
+
+```
